@@ -37,11 +37,12 @@ jobs:
       - name: Build flake default
         run: nix build .#default --print-build-logs
 
-      # Explicitly push built store paths to Cachix (only when secrets are available).
+      # Push built store paths to Cachix (only when secrets are available, e.g., not on forked PRs).
       # The cachix-action installs cachix and configures authentication.
+      # Push the runtime closure of the result (all store paths needed to run it).
       - name: Push to Cachix
         if: ${{ secrets.CACHIX_AUTH_TOKEN != '' && secrets.CACHIX_SIGNING_KEY != '' }}
-        run: nix build --no-link --print-out-paths .#default | cachix push kc-nixpkgs
+        run: nix path-info -r ./result | cachix push kc-nixpkgs
         env:
           CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
           CACHIX_SIGNING_KEY: ${{ secrets.CACHIX_SIGNING_KEY }}
