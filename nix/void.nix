@@ -37,7 +37,7 @@ let
     libsecret
     libthai
     libxkbcommon
-    libxkbfile
+    xorg.libxkbfile
     mesa
     nspr
     nss
@@ -64,16 +64,27 @@ let
     pname = "void-cli";
     version = pkgJson.version;
     src = lib.cleanSource ../cli;
-    cargoLock.lockFile = ../cli/Cargo.lock;
+    cargoLock = {
+      lockFile = ../cli/Cargo.lock;
+      outputHashes = {
+        "russh-0.37.1" = "sha256-10sxPj3ulDd1XEUrTNyQTbxh5B4GCAvAt5LAqlDhgXo=";
+        "russh-keys-0.37.1" = "sha256-10sxPj3ulDd1XEUrTNyQTbxh5B4GCAvAt5LAqlDhgXo=";
+        "russh-cryptovec-0.7.0" = "sha256-10sxPj3ulDd1XEUrTNyQTbxh5B4GCAvAt5LAqlDhgXo=";
+        "tunnels-0.1.0" = "sha256-uE/k4B3H6pLhiWl2K8f8Wqm2sBbnDDseexS5earENCE=";
+      };
+    };
     cargoHash = "sha256-DugRJZ+/yA6+XFNu3jKVuTMRlA3FA28GdrwwUKwk2S0=";
     nativeBuildInputs = [ pkgs.pkg-config ];
     buildInputs = [ pkgs.openssl pkgs.zlib ];
+    # Provide version and product info to the build script so it doesn't need package.json/product.json in the source.
+    VSCODE_CLI_VERSION = pkgJson.version;
+    VSCODE_CLI_PRODUCT_JSON = ../product.json;
   };
 
   cleanedSrc = lib.cleanSourceWith {
     src = ../.;
     filter = path: type:
-      let base = lib.baseNameOf path; in
+      let base = builtins.baseNameOf (toString path); in
       !(base == ".git" || base == ".build" || base == "target" || base == "node_modules");
   };
 in
@@ -110,10 +121,11 @@ pkgs.stdenv.mkDerivation rec {
     mkdir -p "$HOME"
 
     export npm_config_cache=${npmCacheUnion}
-    export npm_config_offline=true
+    export npm_config_offline=false
     export npm_config_legacy_peer_deps=true
     export npm_config_python=${pkgs.python3}/bin/python3
     export npm_config_nodedir=${electron}/lib/node_modules/electron
+    export npm_execpath=${nodejs}/bin/npm
     export FORCE_GIT_DEPS=1
     export FORCE_EMPTY_CACHE=1
     export PLAYWRIGHT_BROWSERS_PATH=0

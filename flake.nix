@@ -13,12 +13,16 @@
       voidPkg = pkgs.callPackage ./nix/void.nix { };
     in
     {
-      packages.${system}.default = voidPkg;
-      packages.${system}.void = voidPkg;
+      packages.${system} = {
+        default = voidPkg;
+        void = voidPkg;
+      };
 
-      apps.${system}.default = {
-        type = "app";
-        program = "${voidPkg}/bin/void";
+      apps.${system} = {
+        default = {
+          type = "app";
+          program = "${voidPkg}/bin/void";
+        };
       };
 
       devShells.${system}.default = import ./nix/shell.nix { inherit pkgs; };
