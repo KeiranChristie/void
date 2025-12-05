@@ -1,0 +1,39 @@
+# Builds the Nix flake and pushes store paths to the kc-nixpkgs Cachix cache.
+# Required secrets (see https://docs.cachix.org/getting-started.html#signing-key-advanced):
+# - CACHIX_AUTH_TOKEN: already configured in repo secrets (upload + download).
+# - CACHIX_SIGNING_KEY: kc-nixpkgs.cachix.org-1:wmUYuse/dt4a6Mtxw06RN4I3TySq+oe3NPvierfAaG0=
+name: Build flake (Nix + Cachix)
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v27
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+            substituters = https://cache.nixos.org https://kc-nixpkgs.cachix.org
+            trusted-public-keys = kc-nixpkgs.cachix.org-1:wmUYuse/dt4a6Mtxw06RN4I3TySq+oe3NPvierfAaG0=
+
+      # Push to Cachix only when secrets are available (e.g., not on forked PRs).
+      - name: Configure Cachix (push)
+        if: ${{ secrets.CACHIX_AUTH_TOKEN != '' && secrets.CACHIX_SIGNING_KEY != '' }}
+        uses: cachix/cachix-action@v14
+        with:
+          name: kc-nixpkgs
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+          signingKey: ${{ secrets.CACHIX_SIGNING_KEY }}
+
+      - name: Build flake default
+        run: nix build .#default --print-build-logs
+
