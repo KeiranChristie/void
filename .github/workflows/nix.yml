@@ -1,0 +1,32 @@
+name: Nix build and Cachix
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v27
+        with:
+          extra_nix_config: |
+            substituters = https://cache.nixos.org/ https://kc-nixpkgs.cachix.org
+            trusted-public-keys = kc-nixpkgs.cachix.org-1:wmUYuse/dt4a6Mtxw06RN4I3TySq+oe3NPvierfAaG0= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
+
+      - name: Configure Cachix
+        uses: cachix/cachix-action@v14
+        with:
+          name: kc-nixpkgs
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+
+      - name: Build default.nix
+        run: nix-build default.nix
+

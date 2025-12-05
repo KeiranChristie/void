@@ -10,7 +10,7 @@ let
 
   npmCaches = import ./npm-deps.nix { inherit pkgs; };
 
-  npmCacheUnion = pkgs.runCommand "void-npm-cache" {} ''
+  npmCacheUnion = pkgs.runCommand "void-npm-cache" { } ''
     mkdir -p $out
     for cache in ${lib.concatStringsSep " " (builtins.attrValues npmCaches)}; do
       if [ -d "$cache" ]; then
@@ -85,7 +85,7 @@ let
     src = ../.;
     filter = path: type:
       let base = builtins.baseNameOf (toString path); in
-      !(base == ".git" || base == ".build" || base == "target" || base == "node_modules");
+        !(base == ".git" || base == ".build" || base == "target" || base == "node_modules");
   };
 in
 pkgs.stdenv.mkDerivation rec {
